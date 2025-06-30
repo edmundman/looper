@@ -1014,5 +1014,77 @@ body {
 }
 
 .control-button:hover i {
-    text-shadow: 0 0 5px currentColor;
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+/* Hand-drawn font styling */
+.font-handwriting {
+    font-family: 'Architects Daughter', cursive;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+}
+
+/* Enhanced AIED.uk link animations */
+@keyframes gradient-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes bounce-subtle {
+    0%, 100% {
+        transform: translateY(0) rotate(-2deg);
+    }
+    50% {
+        transform: translateY(-2px) rotate(-1deg);
+    }
+}
+
+/* Apply animations to the click me text */
+.font-handwriting {
+    animation: bounce-subtle 3s ease-in-out infinite;
+}
+
+/* Enhanced gradient animation for AIED.uk link */
+a[href*="aied.uk"] {
+    animation: pulse 2s ease-in-out infinite;
+    text-shadow: 
+        0 0 5px #ff4444,
+        0 0 10px #ff4444,
+        0 0 15px #ff4444,
+        0 0 20px #ff0000,
+        0 0 35px #ff0000,
+        0 0 40px #ff0000,
+        0 0 50px #ff0000,
+        0 0 75px #ff0000;
+    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.5));
+}
+
+a[href*="aied.uk"]:hover {
+    text-shadow: 
+        0 0 10px #ff6666,
+        0 0 20px #ff6666,
+        0 0 30px #ff6666,
+        0 0 40px #ff4444,
+        0 0 70px #ff4444,
+        0 0 80px #ff4444,
+        0 0 100px #ff4444,
+        0 0 150px #ff4444;
+    filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.8));
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
 } 
