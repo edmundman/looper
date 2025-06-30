@@ -1079,4 +1079,26 @@ a[href*="aied.uk"]:hover {
     50% {
         opacity: 0.8;
     }
+}
+
+@media (max-width: 640px) {
+  .top-bar {
+    padding: 8px !important;
+  }
+  .top-bar .label {
+    font-size: 1.25rem !important;
+  }
+  .display-screen {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 1rem !important;
+  }
+  #allStop {
+    width: 100%;
+    min-width: 0;
+    font-size: 1rem;
+  }
+  .metronome-led-container {
+    flex-shrink: 0;
+  }
 } 

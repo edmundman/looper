@@ -26,8 +26,8 @@
 
     <div class="device-background w-full max-w-screen-2xl">
         <!-- Top Section -->
-        <div class="top-bar w-full flex items-center justify-between">
-            <div class="flex items-center gap-4">
+        <div class="top-bar w-full flex flex-wrap items-center justify-between gap-2 sm:gap-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
                 <h1 class="label text-gray-800 text-2xl tracking-wider">LOOPER</h1>
                 <div class="flex flex-col items-start">
                     <div class="flex items-center">
@@ -37,7 +37,7 @@
                     <span class="text-xs text-gray-500 ml-8 mt-1 font-handwriting opacity-70 transform -rotate-2">click me!</span>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-4">
                 <div class="metronome-led-container">
                     <button id="metronomeToggle" class="control-button py-2 px-3 text-sm">METRONOME</button>
                     <div class="retro-led" id="metronome-led"></div>
@@ -47,10 +47,10 @@
                     <span class="label">BPM</span>
                 </div>
             </div>
-            <div class="display-screen w-48 text-lg h-12 flex items-center justify-center">
+            <div class="display-screen w-48 text-lg h-12 flex items-center justify-center mt-2 sm:mt-0">
                 <span id="memoryDisplay">READY</span>
             </div>
-            <button id="allStop" class="control-button red-button py-2 px-4 uppercase font-bold">All Stop</button>
+            <button id="allStop" class="control-button red-button py-2 px-4 uppercase font-bold mt-2 sm:mt-0">All Stop</button>
         </div>
         <!-- Six Loop Tracks Section -->
         <div id="loop-tracks-container" class="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 py-4"></div>
