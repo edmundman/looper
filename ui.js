@@ -57,6 +57,18 @@ const createLoopTrackUI = (trackId) => {
             <div class="retro-led${track.audioBuffer ? ' ready' : ''}" id="led-${trackId}"></div>
         </div>
         <canvas id="vis-canvas-${trackId}" class="waveform-canvas"></canvas>
+        <!-- In/Out Point Editor -->
+        <div class="w-full flex flex-col items-center mt-2">
+            <div class="relative w-full max-w-xs h-10 rounded overflow-hidden ${track.audioBuffer ? 'bg-gray-200 border border-gray-400' : 'inout-editor-container'}">
+                <div id="inout-bar-${trackId}" class="absolute top-0 left-0 h-full w-full" style="z-index:1;"></div>
+                <div id="in-handle-${trackId}" class="absolute top-0 left-0 w-2 h-full cursor-ew-resize" style="z-index:2;"></div>
+                <div id="out-handle-${trackId}" class="absolute top-0 right-0 w-2 h-full cursor-ew-resize" style="z-index:2;"></div>
+            </div>
+            <div class="flex justify-between w-full max-w-xs text-xs mt-1">
+                <span>In: <span id="in-time-${trackId}">0.00s</span></span>
+                <span>Out: <span id="out-time-${trackId}">0.00s</span></span>
+            </div>
+        </div>
         <div class="w-full flex justify-around items-center pt-2">
             <div class="flex flex-col items-center">
                 <div class="fader-track" data-track-id="${trackId}" data-control="volume"><div class="fader-handle"></div></div>
@@ -423,12 +435,247 @@ const handleDragEnd = () => {
     document.removeEventListener('touchend', handleDragEnd);
 };
 
+// --- In/Out Point Editor Logic ---
+function setupInOutEditor(trackId) {
+    const tracks = window.audioEngine ? window.audioEngine.tracks : {};
+    const track = tracks[trackId];
+    if (!track || !track.audioBuffer) return;
+    if (track.inPoint === undefined) track.inPoint = 0;
+    if (track.outPoint === undefined) track.outPoint = track.audioBuffer.duration;
+
+    const bar = document.getElementById(`inout-bar-${trackId}`);
+    const inHandle = document.getElementById(`in-handle-${trackId}`);
+    const outHandle = document.getElementById(`out-handle-${trackId}`);
+    const inTime = document.getElementById(`in-time-${trackId}`);
+    const outTime = document.getElementById(`out-time-${trackId}`);
+
+    // Add oscilloscope theme classes
+    bar.classList.add('inout-editor-bar');
+    inHandle.classList.add('inout-handle');
+    outHandle.classList.add('inout-handle', 'out');
+
+    // Add grid lines
+    let grid = bar.querySelector('.inout-editor-grid');
+    if (!grid) {
+        grid = document.createElement('div');
+        grid.className = 'inout-editor-grid';
+        for (let i = 1; i < 10; i++) {
+            const line = document.createElement('div');
+            line.className = 'inout-editor-grid-line';
+            line.style.left = `${i * 10}%`;
+            grid.appendChild(line);
+        }
+        bar.appendChild(grid);
+    }
+
+    // Add range bar
+    let rangeBar = bar.querySelector('.inout-editor-bar-range');
+    if (!rangeBar) {
+        rangeBar = document.createElement('div');
+        rangeBar.className = 'inout-editor-bar-range';
+        bar.appendChild(rangeBar);
+    }
+
+    // Add waveform canvas
+    let waveformCanvas = bar.querySelector('.inout-waveform-canvas');
+    if (!waveformCanvas) {
+        waveformCanvas = document.createElement('canvas');
+        waveformCanvas.className = 'inout-waveform-canvas';
+        waveformCanvas.style.position = 'absolute';
+        waveformCanvas.style.top = '0';
+        waveformCanvas.style.left = '0';
+        waveformCanvas.style.width = '100%';
+        waveformCanvas.style.height = '100%';
+        waveformCanvas.style.zIndex = '0';
+        waveformCanvas.style.pointerEvents = 'none';
+        bar.appendChild(waveformCanvas);
+    }
+
+    // Render waveform in the editor bar
+    function renderWaveformInEditor() {
+        const canvas = waveformCanvas;
+        const ctx = canvas.getContext('2d');
+        const rect = bar.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Get audio data
+        const audioData = track.audioBuffer.getChannelData(0);
+        const samplesPerPixel = Math.floor(audioData.length / canvas.width);
+        
+        // Draw waveform
+        ctx.strokeStyle = 'rgba(50, 255, 126, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        
+        for (let x = 0; x < canvas.width; x++) {
+            const startSample = Math.floor(x * samplesPerPixel);
+            const endSample = Math.min(startSample + samplesPerPixel, audioData.length);
+            
+            let sum = 0;
+            for (let i = startSample; i < endSample; i++) {
+                sum += Math.abs(audioData[i]);
+            }
+            const average = sum / (endSample - startSample);
+            const y = (1 - average) * canvas.height / 2;
+            
+            if (x === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+        ctx.stroke();
+
+        // Draw mirrored waveform
+        ctx.beginPath();
+        for (let x = 0; x < canvas.width; x++) {
+            const startSample = Math.floor(x * samplesPerPixel);
+            const endSample = Math.min(startSample + samplesPerPixel, audioData.length);
+            
+            let sum = 0;
+            for (let i = startSample; i < endSample; i++) {
+                sum += Math.abs(audioData[i]);
+            }
+            const average = sum / (endSample - startSample);
+            const y = canvas.height - (1 - average) * canvas.height / 2;
+            
+            if (x === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+        ctx.stroke();
+    }
+
+    // Drag logic
+    let dragging = null;
+    let startX = 0;
+    let barRect = null;
+    let startInPoint = 0;
+    let startOutPoint = 0;
+    
+    function updateHandles() {
+        barRect = bar.getBoundingClientRect();
+        const duration = track.audioBuffer.duration;
+        const inPct = (track.inPoint / duration) * 100;
+        const outPct = (track.outPoint / duration) * 100;
+        inHandle.style.left = `calc(${inPct}% - 4px)`;
+        outHandle.style.left = `calc(${outPct}% - 4px)`;
+        rangeBar.style.left = `${inPct}%`;
+        rangeBar.style.width = `${outPct - inPct}%`;
+        inTime.textContent = track.inPoint.toFixed(2) + 's';
+        outTime.textContent = track.outPoint.toFixed(2) + 's';
+    }
+    
+    function onDrag(e) {
+        if (!dragging) return;
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let x = Math.max(0, Math.min(clientX - barRect.left, barRect.width));
+        const duration = track.audioBuffer.duration;
+        const pct = x / barRect.width;
+        const time = pct * duration;
+        
+        if (dragging === 'in') {
+            track.inPoint = Math.min(time, track.outPoint - 0.01);
+        } else if (dragging === 'out') {
+            track.outPoint = Math.max(time, track.inPoint + 0.01);
+        } else if (dragging === 'segment') {
+            const segmentWidth = startOutPoint - startInPoint;
+            const dragOffset = (clientX - startX) / barRect.width * duration;
+            const newInPoint = Math.max(0, Math.min(duration - segmentWidth, startInPoint + dragOffset));
+            const newOutPoint = newInPoint + segmentWidth;
+            track.inPoint = newInPoint;
+            track.outPoint = newOutPoint;
+        }
+        
+        updateHandles();
+        
+        // Real-time update: if track is playing, restart with new in/out points
+        if (track.state === 'playing' && window.audioEngine && window.audioEngine.playLoop) {
+            window.audioEngine.playLoop(trackId);
+        }
+    }
+    
+    function stopDrag() {
+        dragging = null;
+        document.removeEventListener('mousemove', onDrag);
+        document.removeEventListener('touchmove', onDrag);
+        document.removeEventListener('mouseup', stopDrag);
+        document.removeEventListener('touchend', stopDrag);
+    }
+    
+    // Handle drag events
+    inHandle.onmousedown = (e) => { 
+        dragging = 'in'; 
+        barRect = bar.getBoundingClientRect(); 
+        startX = e.clientX; 
+        document.addEventListener('mousemove', onDrag); 
+        document.addEventListener('mouseup', stopDrag); 
+    };
+    outHandle.onmousedown = (e) => { 
+        dragging = 'out'; 
+        barRect = bar.getBoundingClientRect(); 
+        startX = e.clientX; 
+        document.addEventListener('mousemove', onDrag); 
+        document.addEventListener('mouseup', stopDrag); 
+    };
+    inHandle.ontouchstart = (e) => { 
+        dragging = 'in'; 
+        barRect = bar.getBoundingClientRect(); 
+        startX = e.touches[0].clientX; 
+        document.addEventListener('touchmove', onDrag); 
+        document.addEventListener('touchend', stopDrag); 
+    };
+    outHandle.ontouchstart = (e) => { 
+        dragging = 'out'; 
+        barRect = bar.getBoundingClientRect(); 
+        startX = e.touches[0].clientX; 
+        document.addEventListener('touchmove', onDrag); 
+        document.addEventListener('touchend', stopDrag); 
+    };
+    
+    // Add segment dragging from the middle
+    rangeBar.onmousedown = (e) => {
+        dragging = 'segment';
+        barRect = bar.getBoundingClientRect();
+        startX = e.clientX;
+        startInPoint = track.inPoint;
+        startOutPoint = track.outPoint;
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', stopDrag);
+    };
+    rangeBar.ontouchstart = (e) => {
+        dragging = 'segment';
+        barRect = bar.getBoundingClientRect();
+        startX = e.touches[0].clientX;
+        startInPoint = track.inPoint;
+        startOutPoint = track.outPoint;
+        document.addEventListener('touchmove', onDrag);
+        document.addEventListener('touchend', stopDrag);
+    };
+
+    // Initial render and setup
+    renderWaveformInEditor();
+    updateHandles();
+}
+
+// Patch renderTracks to call setupInOutEditor after rendering
+const origRenderTracks = renderTracks;
+renderTracks = function() {
+    origRenderTracks();
+    for (let i = 1; i <= 6; i++) setupInOutEditor(i);
+};
+
 // Export functions for use in other modules
 window.ui = {
-    renderTracks,
     handleUiClick,
     handleDragStart,
-    handleDragMove,
-    handleDragEnd,
-    updateTrackState
+    renderTracks,
+    updateTrackState,
+    setupInOutEditor
 }; 

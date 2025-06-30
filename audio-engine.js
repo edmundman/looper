@@ -227,6 +227,10 @@ const startRecording = (trackId) => {
         try {
             track.audioBuffer = await audioContext.decodeAudioData(await new Blob(track.recordedChunks).arrayBuffer());
             if (track.state === 'recording') updateTrackState(trackId, 'playing');
+            // Initialize in/out editor after audio is loaded
+            if (window.ui && window.ui.setupInOutEditor) {
+                window.ui.setupInOutEditor(trackId);
+            }
         } catch (e) {
             showMessage(`Track ${trackId} audio error.`, 'error');
             updateTrackState(trackId, 'empty');
@@ -269,15 +273,18 @@ function playLoop(trackId) {
     const track = tracks[trackId];
     if (!track.audioBuffer || !track.mainGain) return;
     stopLoop(trackId);
-    // Do not play if speed is 0
     if (track.speed === 0) return;
     track.playingSource = audioContext.createBufferSource();
     track.playingSource.buffer = track.audioBuffer;
     track.playingSource.loop = true;
-    // Apply speed control
+    // Use in/out points
+    const inPoint = track.inPoint || 0;
+    const outPoint = track.outPoint || track.audioBuffer.duration;
+    track.playingSource.loopStart = inPoint;
+    track.playingSource.loopEnd = outPoint;
     track.playingSource.playbackRate.value = track.speed;
     setupEffectRouting(trackId);
-    track.playingSource.start(0);
+    track.playingSource.start(0, inPoint);
     if(track.visualizationId) cancelAnimationFrame(track.visualizationId);
     drawWaveform(trackId);
 }
@@ -457,6 +464,10 @@ const uploadAudio = async (trackId, file) => {
         track.audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         updateTrackState(trackId, 'stopped');
         showMessage(`Track ${trackId} loaded: ${file.name}`, 'success');
+        // Initialize in/out editor after audio is loaded
+        if (window.ui && window.ui.setupInOutEditor) {
+            window.ui.setupInOutEditor(trackId);
+        }
     } catch (error) {
         console.error('Error loading audio file:', error);
         showMessage(`Error loading audio file: ${file.name}`, 'error');
@@ -492,6 +503,28 @@ const updateTrackSpeed = (trackId, newSpeed) => {
     }
 };
 
+// --- In/Out Point Support ---
+function playFromInPoint(trackId) {
+    const track = tracks[trackId];
+    if (!track.audioBuffer || !track.mainGain) return;
+    stopLoop(trackId);
+    // Do not play if speed is 0
+    if (track.speed === 0) return;
+    track.playingSource = audioContext.createBufferSource();
+    track.playingSource.buffer = track.audioBuffer;
+    track.playingSource.loop = true;
+    // Use in/out points
+    const inPoint = track.inPoint || 0;
+    const outPoint = track.outPoint || track.audioBuffer.duration;
+    track.playingSource.loopStart = inPoint;
+    track.playingSource.loopEnd = outPoint;
+    track.playingSource.playbackRate.value = track.speed;
+    setupEffectRouting(trackId);
+    track.playingSource.start(0, inPoint);
+    if(track.visualizationId) cancelAnimationFrame(track.visualizationId);
+    drawWaveform(trackId);
+}
+
 // Export functions for use in other modules
 window.audioEngine = {
     initAudio,
@@ -506,7 +539,8 @@ window.audioEngine = {
     playLoop,
     updateMemoryDisplay,
     uploadAudio,
-    updateTrackSpeed
+    updateTrackSpeed,
+    playFromInPoint
 };
 
 // Export audioContext for other modules

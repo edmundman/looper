@@ -1101,4 +1101,119 @@ a[href*="aied.uk"]:hover {
   .metronome-led-container {
     flex-shrink: 0;
   }
+}
+
+/* In/Out Point Editor Styles - Oscilloscope Theme */
+.inout-editor-bar {
+  background: linear-gradient(90deg, #101b10 0%, #1a2a1a 100%);
+  border-radius: 8px;
+  height: 100%;
+  opacity: 1;
+  box-shadow: 0 0 12px #32ff7e33, 0 2px 8px #000a;
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  z-index: 0;
+  border: 1px solid rgba(50, 255, 126, 0.3);
+}
+.inout-editor-bar-range {
+  background: linear-gradient(90deg, #32ff7e 0%, #00ff88 100%);
+  opacity: 0.22;
+  height: 100%;
+  position: absolute;
+  z-index: 1;
+  border-radius: 8px;
+  box-shadow: 0 0 8px #32ff7e88, 0 0 16px #32ff7e44;
+  cursor: move;
+  transition: opacity 0.2s;
+}
+.inout-editor-bar-range:hover {
+  opacity: 0.35;
+}
+.inout-handle {
+  width: 18px;
+  height: 100%;
+  background: radial-gradient(circle at 60% 40%, #32ff7e 60%, #101b10 100%);
+  border: 2px solid #32ff7e;
+  border-radius: 8px;
+  box-shadow: 0 0 8px #32ff7e88, 0 0 16px #32ff7e44;
+  cursor: ew-resize;
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.inout-handle:active {
+  box-shadow: 0 0 16px #32ff7e, 0 0 32px #32ff7e88;
+}
+.inout-handle.out {
+  background: radial-gradient(circle at 60% 40%, #ff4757 60%, #101b10 100%);
+  border-color: #ff4757;
+  box-shadow: 0 0 8px #ff475788, 0 0 16px #ff475744;
+}
+.inout-handle.out:active {
+  box-shadow: 0 0 16px #ff4757, 0 0 32px #ff475788;
+}
+.inout-editor-grid {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.inout-editor-grid-line {
+  width: 1px;
+  height: 100%;
+  background: rgba(50,255,126,0.08);
+  position: absolute;
+  top: 0;
+}
+.inout-waveform-canvas {
+  border-radius: 8px;
+  opacity: 0.8;
+}
+
+/* Styling for the container when no audio is loaded */
+.inout-editor-container {
+  background: linear-gradient(135deg, #1a2a1a 0%, #0f1a0f 100%);
+  border: 2px solid rgba(50, 255, 126, 0.2);
+  box-shadow: 
+    0 0 8px rgba(50, 255, 126, 0.1),
+    inset 0 1px 0 rgba(50, 255, 126, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.inout-editor-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(90deg, transparent 0%, rgba(50, 255, 126, 0.05) 50%, transparent 100%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(50, 255, 126, 0.02) 2px,
+      rgba(50, 255, 126, 0.02) 4px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.inout-editor-container::after {
+  content: 'NO AUDIO';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(50, 255, 126, 0.4);
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-shadow: 0 0 4px rgba(50, 255, 126, 0.5);
+  pointer-events: none;
+  z-index: 1;
 } 
