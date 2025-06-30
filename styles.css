@@ -1056,28 +1056,20 @@ body {
 a[href*="aied.uk"] {
     animation: pulse 2s ease-in-out infinite;
     text-shadow: 
-        0 0 5px #ff4444,
-        0 0 10px #ff4444,
-        0 0 15px #ff4444,
-        0 0 20px #ff0000,
-        0 0 35px #ff0000,
-        0 0 40px #ff0000,
-        0 0 50px #ff0000,
-        0 0 75px #ff0000;
-    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.5));
+        0 0 2px #ff4444,
+        0 0 4px #ff4444,
+        0 0 8px rgba(255, 0, 0, 0.4),
+        0 0 12px rgba(255, 0, 0, 0.2);
+    filter: drop-shadow(0 0 2px rgba(255, 0, 0, 0.2));
 }
 
 a[href*="aied.uk"]:hover {
     text-shadow: 
-        0 0 10px #ff6666,
-        0 0 20px #ff6666,
-        0 0 30px #ff6666,
-        0 0 40px #ff4444,
-        0 0 70px #ff4444,
-        0 0 80px #ff4444,
-        0 0 100px #ff4444,
-        0 0 150px #ff4444;
-    filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.8));
+        0 0 4px #ff6666,
+        0 0 8px #ff6666,
+        0 0 12px rgba(255, 0, 0, 0.3),
+        0 0 16px rgba(255, 0, 0, 0.15);
+    filter: drop-shadow(0 0 4px rgba(255, 0, 0, 0.3));
 }
 
 @keyframes pulse {
