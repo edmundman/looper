@@ -454,6 +454,13 @@ function setupInOutEditor(trackId) {
     inHandle.classList.add('inout-handle');
     outHandle.classList.add('inout-handle', 'out');
 
+    // Add no-audio class if no audio is loaded
+    if (!track.audioBuffer) {
+        bar.parentElement.classList.add('no-audio');
+    } else {
+        bar.parentElement.classList.remove('no-audio');
+    }
+
     // Add grid lines
     let grid = bar.querySelector('.inout-editor-grid');
     if (!grid) {

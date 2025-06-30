@@ -1202,7 +1202,7 @@ a[href*="aied.uk"]:hover {
   z-index: 0;
 }
 
-.inout-editor-container::after {
+.inout-editor-container.no-audio::after {
   content: 'NO AUDIO';
   position: absolute;
   top: 50%;
